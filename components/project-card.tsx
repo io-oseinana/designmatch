@@ -7,10 +7,12 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 const ProjectCard = ({project}: { project: Project }) => {
     const {deleteProject} = useProject();
 
+    const previewImage = project.images.find((img) => img.breakpoint === 'desktop')?.data || project.images[0]?.data;
+
     return (
-        <div className="relative bg-white/80 backdrop-blur-sm shadow-sm p-2 rounded-lg w-[290px] h-auto">
+        <div className="relative bg-background backdrop-blur-sm shadow-sm p-2 rounded-lg w-[290px] h-auto">
             <div className="w-full h-auto md:h-[178px] overflow-hidden mb-2">
-                <Image width={274} height={178} src={project.images[0]} alt={project.name}
+                <Image width={274} height={178} src={previewImage || ''} alt={project.name}
                        className="w-full h-full object-fill mb-2 rounded"/>
             </div>
             <h3 className="text-xl font-semibold">{project.name}</h3>

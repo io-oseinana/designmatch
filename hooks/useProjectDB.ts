@@ -1,13 +1,18 @@
 import { openDB, deleteDB, wrap, unwrap } from "idb";
 import {useCallback, useEffect, useState} from "react";
 
-
+export interface ProjectImage {
+    breakpoint: 'desktop' | 'tablet' | 'mobile';
+    data: string
+}
 export interface Project {
     id: string;
     name: string;
     description?: string;
-    images: string[];
+    images: ProjectImage[];
+    screenshots: ProjectImage[];
     url: string;
+    projectUrl: string;
 }
 
 const DB_NAME = 'designmatchDB';

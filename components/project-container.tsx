@@ -8,7 +8,7 @@ export default function ProjectContainer() {
 
     return (
         <section
-            className={`flex flex-1 w-full h-full bg-cover bg-center bg-[url('/Rectangle-4243.svg')] rounded-2xl p-4`}>
+            className={`flex flex-1 w-full h-full bg-cover bg-center bg-[#f2f1f4] dark:bg-black rounded-2xl p-4`}>
             {isLoading ? (
                 <div className="flex items-center justify-center gap-2 w-full text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -27,7 +27,7 @@ export default function ProjectContainer() {
                     <span className="text-xs">Loading...</span>
                 </div>
             ) : projects.length === 0 ? (
-                <div className="flex items-center justify-center text-center text-gray-500">
+                <div className="flex flex-col w-full items-center justify-center text-center text-gray-500">
                     <h2 className="text-2xl font-semibold mb-4">No Projects Found</h2>
                     <p className="text-gray-400">Start by creating a new project to compare your designs
                         side-by-side.</p>
