@@ -14,12 +14,12 @@ import {Button} from "@/components/ui/button";
 import React, {useState} from "react";
 import Image from "next/image";
 import useProject from "@/context/useProject";
-import {Project as ProjectType} from "@/hooks/useProjectDB";
+import {Project as ProjectType, ProjectImage} from "@/hooks/useProjectDB";
 
 export default function ProjectForm() {
     const {saveProject} = useProject();
     const [open, setOpen] = useState(false);
-    const [images, setImages] = useState<{
+    const [designImages, setIDesignImages] = useState<{
         desktop: string | null;
         tablet?: string | null;
         mobile?: string | null;
@@ -28,16 +28,63 @@ export default function ProjectForm() {
         tablet: null,
         mobile: null,
     });
+    const [screenshotsImages, setscreenshotsImages] = useState<{
+        desktop: string | null;
+        tablet?: string | null;
+        mobile?: string | null;
+    }>({
+        desktop: null,
+        tablet: null,
+        mobile: null,
+    });
+    const [isGenerating, setIsGenerating] = useState(false);
+
     const handleUpload = (event: React.ChangeEvent<HTMLInputElement>, breakpoint: 'desktop' | 'tablet' | 'mobile') => {
         const file = event.target.files?.[0];
 
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setImages(prev => ({...prev, [breakpoint]: reader.result as string}));
+                setIDesignImages(prev => ({...prev, [breakpoint]: reader.result as string}));
             }
             reader.readAsDataURL(file);
         }
+    }
+
+    const handleAutoGenerate = async () => {
+        const urlInput = document.getElementById('url') as HTMLInputElement;
+        let url = urlInput?.value
+
+        if (!url) {
+            alert("Please enter a URL first.");
+            return;
+        }
+
+        if (!/^https?:\/\//i.test(url)) {
+            url = `https://${url}`;
+        }
+
+        setIsGenerating(true);
+        const types = ['desktop', 'tablet', 'mobile'] as const;
+
+        for (const type of types) {
+            try {
+                const res = await fetch(`/api/screenshot?url=${encodeURIComponent(url)}&type=${type}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    console.error(`API Error (${type}):`, data.error);
+                    continue;
+                }
+
+                if (data.image) {
+                    setscreenshotsImages(prev => ({...prev, [type]: data.image}));
+                }
+            } catch (error) {
+                console.error(`Failed to generate ${type} screenshot:`, error);
+            }
+        }
+        setIsGenerating(false);
     }
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -50,18 +97,31 @@ export default function ProjectForm() {
 
         if (!name || !url) return;
 
+        const images: ProjectImage[] = [];
+        if (designImages.desktop) images.push({breakpoint: 'desktop', data: designImages.desktop});
+        if (designImages.tablet) images.push({breakpoint: 'tablet', data: designImages.tablet});
+        if (designImages.mobile) images.push({breakpoint: 'mobile', data: designImages.mobile});
+
+        const screenshots: ProjectImage[] = [];
+        if (screenshotsImages.desktop) screenshots.push({breakpoint: 'desktop', data: screenshotsImages.desktop});
+        if (screenshotsImages.tablet) screenshots.push({breakpoint: 'tablet', data: screenshotsImages.tablet});
+        if (screenshotsImages.mobile) screenshots.push({breakpoint: 'mobile', data: screenshotsImages.mobile});
+
         const newProject: ProjectType = {
             id: crypto.randomUUID(),
             name,
             description,
-            images: [images.desktop, images.tablet, images.mobile].filter((img): img is string => !!img),
-            url
+            images,
+            screenshots,
+            url,
+            projectUrl: `project-${crypto.randomUUID().slice(0, 8)}`,
         };
         await saveProject(newProject);
         setOpen(false);
-        setImages({desktop: null, tablet: null, mobile: null});
+        setIDesignImages({desktop: null, tablet: null, mobile: null});
+        setscreenshotsImages({desktop: null, tablet: null, mobile: null});
     }
-    const uploadFields = [
+    const deviceFields = [
         {
             key: 'desktop',
             label: 'Desktop',
@@ -94,6 +154,8 @@ export default function ProjectForm() {
         }
     ] as const;
 
+    const hasDesignImages = !!(designImages.desktop || designImages.tablet || designImages.mobile);
+    const hasScreenshotImages = !!(screenshotsImages.desktop || screenshotsImages.tablet || screenshotsImages.mobile);
     return (
         <section>
             <div className="py-4">
@@ -107,7 +169,7 @@ export default function ProjectForm() {
                         </svg>
                         Create New Project
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="overflow-y-auto max-h-[90vh]">
                         <DialogHeader>
                             <DialogTitle>New Project</DialogTitle>
                             <DialogDescription>
@@ -118,16 +180,17 @@ export default function ProjectForm() {
                             <form onSubmit={handleSubmit} className="flex flex-col space-y-4 my-4">
                                 <div>
                                     <div className="flex justify-between mb-4">
-                                        <Label>Upload Design Image <span className="text-red-500">*</span></Label>
+                                        <Label>1. Upload Design Reference <span
+                                            className="text-red-500">*</span></Label>
                                     </div>
                                     <div
                                         className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex gap-2 items-center justify-center p-2">
-                                        {uploadFields.map((field) => (
+                                        {deviceFields.map((field) => (
                                             <div key={field.key}
                                                  className="relative bg-[#dfdfdf] h-full overflow-hidden rounded-md group">
-                                                {images[field.key as keyof typeof images] ? (
-                                                    <Image src={images[field.key as keyof typeof images]!}
-                                                           alt={`${field.label} Preview`} width="140" height="170"
+                                                {designImages[field.key as keyof typeof designImages] ? (
+                                                    <Image src={designImages[field.key as keyof typeof designImages]!}
+                                                           alt={`${field.label} Design`} width="140" height="170"
                                                            className="w-full h-full object-contain rounded-md absolute"/>
                                                 ) : (
                                                     <div
@@ -145,6 +208,90 @@ export default function ProjectForm() {
                                         ))}
                                     </div>
                                 </div>
+
+                                <div>
+                                    <div className="flex flex-col space-y-4 my-4">
+                                        <Label htmlFor="url">2. Live Website URL<span
+                                            className="text-red-500">*</span></Label>
+                                        <Input id="url" name="url"
+                                               placeholder="https://username.github.io/signup-ui" required/>
+                                        <Button type="button" variant="outline" onClick={handleAutoGenerate}
+                                                disabled={isGenerating}>
+                                            {isGenerating ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                     viewBox="0 0 24 24" fill="none"
+                                                     stroke="currentColor" stroke-width="1" stroke-linecap="round"
+                                                     stroke-linejoin="round"
+                                                     className="icon icon-tabler icons-tabler-outline icon-tabler-loader animate-spin text-xs">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                    <path d="M12 6l0 -3"/>
+                                                    <path d="M16.25 7.75l2.15 -2.15"/>
+                                                    <path d="M18 12l3 0"/>
+                                                    <path d="M16.25 16.25l2.15 2.15"/>
+                                                    <path d="M12 18l0 3"/>
+                                                    <path d="M7.75 16.25l-2.15 2.15"/>
+                                                    <path d="M6 12l-3 0"/>
+                                                    <path d="M7.75 7.75l-2.15 -2.15"/>
+                                                </svg>
+                                            ) : (
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                                     className="icon icon-tabler icons-tabler-outline icon-tabler-camera">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                    <path
+                                                        d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2"/>
+                                                    <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/>
+                                                </svg>
+                                            )}
+                                            <span className="sr-only md:not-sr-only md:ml-2">Auto-Generate</span>
+                                        </Button>
+
+                                    </div>
+                                </div>
+
+                                {hasScreenshotImages && (
+                                    <div>
+                                        <div className="flex justify-between mb-4">
+                                            <Label>3. Generated Live Previews</Label>
+                                        </div>
+                                        <div
+                                            className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex gap-2 items-center justify-center p-2">
+                                            {deviceFields.map((field) => (
+                                                <div key={field.key}
+                                                     className="relative bg-[#dfdfdf] w-full h-full overflow-hidden rounded-md group z-50">
+                                                    {screenshotsImages[field.key as keyof typeof screenshotsImages] ? (
+                                                        <Image
+                                                            src={screenshotsImages[field.key as keyof typeof screenshotsImages]!}
+                                                            alt={`${field.label} Design`} width="140" height="170"
+                                                            className="w-full h-full object-contain rounded-md absolute"/>
+                                                    ) : (
+                                                        <div
+                                                            className="absolute flex flex-col items-center justify-center bg-[#dfdfdf] w-full h-full rounded-md">
+                                                            {field.icon}
+                                                            <span className="text-xs text-gray-500 text-center">
+                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                      height="24" viewBox="0 0 24 24" fill="none"
+                                                                      stroke="currentColor" stroke-width="1"
+                                                                      stroke-linecap="round" stroke-linejoin="round"
+                                                                      className="icon icon-tabler icons-tabler-outline icon-tabler-loader animate-spin text-xs"><path
+                                                                     stroke="none" d="M0 0h24v24H0z" fill="none"/><path
+                                                                     d="M12 6l0 -3"/><path d="M16.25 7.75l2.15 -2.15"/><path
+                                                                     d="M18 12l3 0"/><path d="M16.25 16.25l2.15 2.15"/><path
+                                                                     d="M12 18l0 3"/><path d="M7.75 16.25l-2.15 2.15"/><path
+                                                                     d="M6 12l-3 0"/><path d="M7.75 7.75l-2.15 -2.15"/>
+                                                </svg>
+                                                                waiting...
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                    </div>
+                                )}
+
                                 <div>
                                     <div className="flex flex-col space-y-4 my-4">
                                         <Label htmlFor="name">ProjectForm Name <span
@@ -156,16 +303,11 @@ export default function ProjectForm() {
                                         <Textarea id="description" name="description"
                                                   placeholder="Signup UI design component"/>
                                     </div>
-                                    <div className="flex flex-col space-y-4 my-4">
-                                        <Label htmlFor="url">Live Link or Port<span
-                                            className="text-red-500">*</span></Label>
-                                        <Input id="url" name="url"
-                                               placeholder="3000 or https://username.github.io/signup-ui" required/>
-                                    </div>
                                 </div>
 
                                 <div className="flex justify-end mt-4">
-                                    <Button type="submit" aria-label="Save ProjectForm">
+                                    <Button type="submit" aria-label="Save ProjectForm"
+                                            disabled={isGenerating || !hasDesignImages || !hasScreenshotImages}>
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                              xmlns="http://www.w3.org/2000/svg">
                                             <path
