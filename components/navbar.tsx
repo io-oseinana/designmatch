@@ -2,6 +2,7 @@ import React from 'react'
 import Image from 'next/image'
 import Link from "next/link";
 import {Button} from "@/components/ui/button";
+import {ModeToggle} from "@/components/mode-toggle";
 
 export default function Navbar() {
     return (
@@ -10,7 +11,7 @@ export default function Navbar() {
                 <Image src="/designmatch-logo.svg" alt="logo" width="35" height="35" className="w-auto h-auto" />
                 <span className="text-sm font-semibold">designmatch</span>
             </div>
-            <div>
+            <div className="flex items-center gap-3">
                 <Button asChild>
                     <Link href="/">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -22,6 +23,7 @@ export default function Navbar() {
                         <span className="ml-2">Star on GitHub</span>
                     </Link>
                 </Button>
+                <ModeToggle />
             </div>
         </nav>
     )
