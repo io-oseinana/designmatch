@@ -70,7 +70,7 @@ export async function GET(request: Request) {
         });
 
         // Wait a brief moment for images to render after scrolling
-        await new Promise(resolve => setTimeout(resolve, 10000 /* 10 seconds wait to avoid some lazy load issues */));
+        await new Promise(resolve => setTimeout(resolve, 5000 /* 5 seconds wait to avoid some lazy load issues */));
 
         const imageBuffer = await page.screenshot({ encoding: 'base64', fullPage: true });
 
