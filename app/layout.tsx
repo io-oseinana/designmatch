@@ -16,7 +16,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
     title: "designmatch",
-    description: "Compare your design side-by-side.",
+    description: "A design comparison tool, compare your design side-by-side.",
+    icons: {
+        icon: "/favicon.svg",
+    }
 };
 
 export default function RootLayout({
