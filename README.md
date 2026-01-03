@@ -1,5 +1,7 @@
-# ![designmatch-logo.svg](public/designmatch-logo.svg) designmatch
-  A design comparison tool for developers.
+# ![designmatch-logo.svg](public/designmatch-logo.svg) [designmatch](https://designmatch.vercel.app/)
+A design comparison tool for developers.
+
+## [Live Demo](https://designmatch.vercel.app/)
 
 ![img.png](img.png)
 
@@ -47,7 +49,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## License
 [MIT](LICENSE)
- 
+
 ## Acknowledgements
 - Used [GreatFrontend](https://www.greatfrontend.com/) project design component for the comparison view.
 
