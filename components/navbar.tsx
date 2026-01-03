@@ -12,8 +12,9 @@ export default function Navbar() {
                 <span className="text-sm font-semibold">designmatch</span>
             </Link>
             <div className="flex items-center gap-3">
+                <ModeToggle />
                 <Button asChild className=" dark:bg-white">
-                    <Link href="/">
+                    <Link href="https://github.com/io-oseinana/designmatch" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                              fill="currentColor" className="icon icon-tabler icons-tabler-filled icon-tabler-brand-github text-white dark:text-black">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -23,7 +24,6 @@ export default function Navbar() {
                         <span className="ml-2">Star on GitHub</span>
                     </Link>
                 </Button>
-                <ModeToggle />
             </div>
         </nav>
     )
