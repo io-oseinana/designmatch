@@ -1,10 +1,11 @@
-import { openDB, deleteDB, wrap, unwrap } from "idb";
+import {openDB} from "idb";
 import {useCallback, useEffect, useState} from "react";
 
 export interface ProjectImage {
     breakpoint: 'desktop' | 'tablet' | 'mobile';
     data: string
 }
+
 export interface Project {
     id: string;
     name: string;
@@ -21,20 +22,21 @@ const DB_VERSION = 1;
 
 export function useProjectDB() {
     const [db, setDB] = useState<any>(null);
-    const [loading,setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         async function initDB() {
             const database = await openDB(DB_NAME, DB_VERSION, {
                 upgrade(db) {
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                        db.createObjectStore(STORE_NAME, {keyPath: 'id'});
                     }
                 },
             });
             setDB(database);
             setLoading(false);
         }
+
         initDB();
 
     }, []);
@@ -56,5 +58,5 @@ export function useProjectDB() {
         await db.delete(STORE_NAME, id);
     }, [db]);
 
-    return { getAllProjects, saveProject, deleteProject, loading };
+    return {getAllProjects, saveProject, deleteProject, loading};
 }
