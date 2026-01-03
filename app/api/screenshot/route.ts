@@ -6,6 +6,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const url = searchParams.get('url');
     const type = searchParams.get('type') || 'desktop';
+    const widthParams = searchParams.get('width');
+    const heightParams = searchParams.get('height');
 
     if (!url) {
         return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -35,18 +37,42 @@ export async function GET(request: Request) {
 
         // Viewport for breakpoints
         const viewports = {
-            desktop: { width: 1920, height: 1080 },
+            desktop: { width: 1440, height: 1080 },
             tablet: { width: 768, height: 1024 },
             mobile: { width: 375, height: 812 },
         };
 
-        const { width, height } = viewports[type as keyof typeof viewports] || viewports.desktop;
+        let { width, height } = viewports[type as keyof typeof viewports] || viewports.desktop;
+
+        if (widthParams) width = parseInt(widthParams, 10);
+        if (heightParams) height = parseInt(heightParams, 10);
 
         await page.setViewport({ width, height });
 
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
-        const imageBuffer = await page.screenshot({ encoding: 'base64' });
+        // Scroll to bottom to trigger lazy loading images
+        await page.evaluate(async () => {
+            await new Promise<void>((resolve) => {
+                let totalHeight = 0;
+                const distance = 200; // Scroll distance per step
+                const timer = setInterval(() => {
+                    const scrollHeight = document.body.scrollHeight;
+                    window.scrollBy(0, distance);
+                    totalHeight += distance;
+
+                    if (totalHeight >= scrollHeight) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, 100); // Scroll every 100ms
+            });
+        });
+
+        // Wait a brief moment for images to render after scrolling
+        await new Promise(resolve => setTimeout(resolve, 10000 /* 10 seconds wait to avoid some lazy load issues */));
+
+        const imageBuffer = await page.screenshot({ encoding: 'base64', fullPage: true });
 
         return NextResponse.json({
             image: `data:image/png;base64,${imageBuffer}`
