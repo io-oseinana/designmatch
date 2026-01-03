@@ -3,6 +3,13 @@ import {Project} from "@/hooks/useProjectDB";
 import useProject from "@/context/useProject";
 import Image from "next/image";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu"
+import Link from "next/link";
+
+export function capitalizeFirstLetter(str: string) {
+    if (!str) return str;
+
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 const ProjectCard = ({project}: { project: Project }) => {
     const {deleteProject} = useProject();
@@ -10,17 +17,19 @@ const ProjectCard = ({project}: { project: Project }) => {
     const previewImage = project.images.find((img) => img.breakpoint === 'desktop')?.data || project.images[0]?.data;
 
     return (
-        <div className="relative bg-background backdrop-blur-sm shadow-sm p-2 rounded-lg w-[290px] h-auto">
+        <Link href={`/${project.projectUrl}`}
+              className="relative bg-white dark:bg-[#111111] border border-[#f0f0f0] dark:border-[#222222] backdrop-blur-sm shadow-sm p-2 rounded-lg w-full md:w-[290px] lg:w-[322px] h-auto animate-in fade-in zoom-in-95 duration-500">
             <div className="w-full h-auto md:h-[178px] overflow-hidden mb-2">
-                <Image width={274} height={178} src={previewImage || ''} alt={project.name}
-                       className="w-full h-full object-fill mb-2 rounded"/>
+                <Image width={274} height={190} src={previewImage || ''} alt={project.name}
+                       className="size-full object-cover mb-2 rounded" loading="lazy"/>
             </div>
-            <h3 className="text-xl font-semibold">{project.name}</h3>
-            {project.description && <p className="text-gray-500 text-xs mb-4">{project.description}</p>}
+            <h3 className="text-xl font-semibold">{capitalizeFirstLetter(project.name)}</h3>
+            {project.description &&
+                <p className="text-gray-500 text-xs mb-4">{capitalizeFirstLetter(project.description)}</p>}
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild
-                                     className="absolute bottom-2 right-2 rounded-full hover:bg-white cursor-pointer">
+                                     className="absolute bottom-2 right-2 rounded-full  cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                          fill="none"
                          stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
@@ -48,7 +57,7 @@ const ProjectCard = ({project}: { project: Project }) => {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-        </div>
+        </Link>
     )
 }
 export default ProjectCard

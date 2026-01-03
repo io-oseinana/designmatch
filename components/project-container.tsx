@@ -8,7 +8,7 @@ export default function ProjectContainer() {
 
     return (
         <section
-            className={`flex flex-1 w-full h-full bg-cover bg-center bg-[#f2f1f4] dark:bg-black rounded-2xl p-4`}>
+            className={`flex flex-1 w-full min-h-[80vh] bg-cover bg-center   rounded-2xl`}>
             {isLoading ? (
                 <div className="flex items-center justify-center gap-2 w-full text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
